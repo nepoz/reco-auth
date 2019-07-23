@@ -1,0 +1,23 @@
+{
+  "name": "reco-auth",
+  "version": "1.0.0",
+  "description": "Authentication endpoints for Spotify API being utilized by reco-bot",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bishrut Bhattarai",
+  "license": "MIT",
+  "devDependencies": {
+    "eslint": "^5.16.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-plugin-import": "^2.18.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.17.1"
+  },
+  "devDependecies": {
+    "nodemon": "^1.19.1"
+  }
+}

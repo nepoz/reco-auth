@@ -4,6 +4,7 @@
   "description": "Authentication endpoints for Spotify API being utilized by reco-bot",
   "main": "index.js",
   "scripts": {
+    "watch": "nodemon index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Bishrut Bhattarai",
@@ -11,11 +12,21 @@
   "devDependencies": {
     "eslint": "^5.16.0",
     "eslint-config-airbnb-base": "^13.2.0",
-    "eslint-plugin-import": "^2.18.2"
+    "eslint-plugin-import": "^2.18.2",
+    "nodemon": "^1.19.1"
   },
   "dependencies": {
+    "axios": "^0.19.0",
+    "axios-oauth-client": "^1.1.1",
+    "cookie-parser": "^1.4.4",
     "cors": "^2.8.5",
-    "express": "^4.17.1"
+    "cryptr": "^4.0.2",
+    "dotenv": "^8.0.0",
+    "express": "^4.17.1",
+    "mongoose": "^5.6.6",
+    "open": "^6.4.0",
+    "querystring": "^0.2.0",
+    "randomstring": "^1.1.5"
   },
   "devDependecies": {
     "nodemon": "^1.19.1"

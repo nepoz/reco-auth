@@ -1,4 +1,3 @@
-require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const querystring = require('querystring');
@@ -8,6 +7,12 @@ const axios = require('axios');
 const oauth = require('axios-oauth-client');
 const Cryptr = require('cryptr');
 const mongoose = require('mongoose');
+const {
+  KEY,
+  MONGODB_URI,
+  SPOTIFY_CLIENT_ID,
+  SPOTIFY_CLIENT_SECRET,
+} = require('./config');
 const AuthInformation = require('./models/AuthInformation');
 
 // Keys for cookie entries
@@ -18,14 +23,15 @@ const userIdKey = 'discord_user_id';
 const codeUrl = 'https://accounts.spotify.com/authorize?';
 const tokenUrl = 'https://accounts.spotify.com/api/token';
 const spotifyUrl = 'https://www.spotify.com/us/';
+const callbackUrl = 'http://localhost:8080';
 
-const cryptr = new Cryptr(process.env.KEY);
+const cryptr = new Cryptr(KEY);
 
 const app = express();
 app.use(cors());
 app.use(cookieParser());
 
-mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true });
+mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
 /**
  * Makes request to Spotify auth server for authorization CODE
@@ -40,10 +46,10 @@ app.get('/spotify-login', async (req, res) => {
   res.cookie(stateKey, state);
 
   const requestParams = {
-    client_id: process.env.SPOTIFY_CLIENT_ID,
+    client_id: SPOTIFY_CLIENT_ID,
     response_type: 'code',
     scope: 'user-read-playback-state user-read-currently-playing user-modify-playback-state',
-    redirect_uri: 'http://localhost:8080/callback',
+    redirect_uri: callbackUrl,
     state,
   };
 
@@ -70,10 +76,10 @@ app.get('/callback', async (req, res) => {
     const sendAuthRequest = oauth.client(axios.create(), {
       url: tokenUrl,
       grant_type: 'authorization_code',
-      client_id: process.env.SPOTIFY_CLIENT_ID,
-      client_secret: process.env.SPOTIFY_CLIENT_SECRET,
+      client_id: SPOTIFY_CLIENT_ID,
+      client_secret: SPOTIFY_CLIENT_SECRET,
       code,
-      redirect_uri: 'http://localhost:8080/callback',
+      redirect_uri: callbackUrl,
     });
 
     const auth = await sendAuthRequest();

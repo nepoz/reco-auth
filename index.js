@@ -1,5 +1,6 @@
 const express = require('express');
 const cors = require('cors');
+const bodyParser = require('body-parser');
 const querystring = require('querystring');
 const randomString = require('randomstring');
 const cookieParser = require('cookie-parser');
@@ -12,6 +13,7 @@ const {
   MONGODB_URI,
   SPOTIFY_CLIENT_ID,
   SPOTIFY_CLIENT_SECRET,
+  PORT,
 } = require('./config');
 const AuthInformation = require('./models/AuthInformation');
 
@@ -22,14 +24,16 @@ const userIdKey = 'discord_user_id';
 // URLs to be used during the authentication and redirect processes
 const codeUrl = 'https://accounts.spotify.com/authorize?';
 const tokenUrl = 'https://accounts.spotify.com/api/token';
-const spotifyUrl = 'https://www.spotify.com/us/';
-const callbackUrl = 'http://localhost:8080';
+const spotifyProfile = 'https://www.spotify.com/us/account/overview/';
+const callbackUrl = 'http://localhost:8080/callback';
 
 const cryptr = new Cryptr(KEY);
 
 const app = express();
 app.use(cors());
+app.use(bodyParser.json());
 app.use(cookieParser());
+app.use(express.static('public'));
 
 mongoose.connect(MONGODB_URI, { useNewUrlParser: true });
 
@@ -93,17 +97,48 @@ app.get('/callback', async (req, res) => {
     };
 
     // Enter user information into database
-    const userEntry = new AuthInformation({
+    const newEntry = new AuthInformation({
       id,
       auth: authEncrypted,
     });
-    userEntry.save();
 
-    // Once user completes auth flow, redirect them to spotify home page
-    res.redirect(spotifyUrl);
+    newEntry.save();
+
+    res.redirect(spotifyProfile);
   }
 });
 
-app.listen(8080, () => {
-  console.log('listening on port 8080');
+/**
+ * Handles the request to refresh access tokens for user
+ */
+app.get('/refresh', async (req, res) => {
+  const userId = req.query.id || null;
+
+  if (!userId) res.json({ error: 'Missing REQUIRED parameter id' }).end();
+
+  const refreshToken = await AuthInformation
+    .findOne({ id: userId })
+    .then(entry => entry.toJSON())
+    .then(entry => cryptr.decrypt(entry.auth.refresh_token));
+
+  const sendRefreshRequest = oauth.client(axios.create(), {
+    url: tokenUrl,
+    grant_type: 'refresh_token',
+    client_id: SPOTIFY_CLIENT_ID,
+    client_secret: SPOTIFY_CLIENT_SECRET,
+    refresh_token: refreshToken,
+  });
+
+  const newAuth = await sendRefreshRequest();
+  
+  const newAuthEncrypted = {
+    access_token: cryptr.encrypt(newAuth.access_token),
+    refresh_token: newAuth.refresh_token ? cryptr.encrypt(newAuth.refresh_token) : cryptr.encrypt(refreshToken),
+  };
+
+  await AuthInformation.findOneAndUpdate({ id: userId }, { auth: newAuthEncrypted });
+});
+
+app.listen(PORT, () => {
+  console.log(`Listening on port ${PORT}`);
 });

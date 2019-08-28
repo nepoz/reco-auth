@@ -5,4 +5,5 @@ module.exports = {
   SPOTIFY_CLIENT_SECRET: process.env.SPOTIFY_CLIENT_SECRET,
   KEY: process.env.KEY,
   MONGODB_URI: process.env.MONGODB_URI,
+  PORT: process.env.PORT || 8080,
 };

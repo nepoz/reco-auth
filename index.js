@@ -17,6 +17,9 @@ const {
 } = require('./config');
 const AuthInformation = require('./models/AuthInformation');
 
+// Conversion constant from seconds to milliseconds
+const MILLISECONDS_IN_SECOND = 1000;
+
 // Keys for cookie entries
 const stateKey = 'spotify_auth_state';
 const userIdKey = 'discord_user_id';
@@ -100,6 +103,7 @@ app.get('/callback', async (req, res) => {
     const newEntry = new AuthInformation({
       id,
       auth: authEncrypted,
+      expires_at: Date.now() + (auth.expires_in * MILLISECONDS_IN_SECOND),
     });
 
     newEntry.save();
@@ -130,13 +134,15 @@ app.get('/refresh', async (req, res) => {
   });
 
   const newAuth = await sendRefreshRequest();
-  
+ 
   const newAuthEncrypted = {
     access_token: cryptr.encrypt(newAuth.access_token),
     refresh_token: newAuth.refresh_token ? cryptr.encrypt(newAuth.refresh_token) : cryptr.encrypt(refreshToken),
+    expires_at: Date.now() + (newAuth.expires_in * MILLISECONDS_IN_SECOND),     // the time at which the token expires
   };
 
   await AuthInformation.findOneAndUpdate({ id: userId }, { auth: newAuthEncrypted });
+  res.status(200).end();
 });
 
 app.listen(PORT, () => {
